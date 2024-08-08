@@ -13,6 +13,7 @@ import {
   Image,
   StyleSheet,
   TextInput,
+  Alert,
 } from "react-native";
 import Icon_AntDesign from "react-native-vector-icons/AntDesign";
 import logo from "./image/logo.png";
@@ -64,12 +65,12 @@ const Login = ({ navigation }) => {
           loginRequest
         );
         let token = response.headers.authorization;
-        if (token.trim()) {
-          setStorage("token", token);
-          console.log(getStorage("token"));
+        if (token) {
+          await setStorage("token", token);
+          navigation.navigate("Home");
         }
       } catch (error) {
-        console.error(error.response);
+        Alert.alert("에러", error.response.data.message);
       }
     }
   };
