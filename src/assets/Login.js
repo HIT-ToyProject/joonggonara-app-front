@@ -21,7 +21,7 @@ import kakao from "./image/kakaotalk.png";
 import naver from "./image/naver.png";
 import google from "./image/google.png";
 import axios from "axios";
-import { setStorage, getStorage } from "./TokenStorage";
+import { setStorage } from "./TokenStorage";
 
 const Login = ({ navigation }) => {
   const [idInput, setIdInput] = useState("");
