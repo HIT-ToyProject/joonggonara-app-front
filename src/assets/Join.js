@@ -65,12 +65,6 @@ const Join = ({ navigation }) => {
     setEye(!eye);
   };
 
-  const handleCheckText = (text, duplicateText, setduplicateText) => {
-    if (text !== duplicateText) {
-      setduplicateText(false);
-      return;
-    }
-  };
 
   const onChangeText = (
     text,
@@ -84,10 +78,6 @@ const Join = ({ navigation }) => {
       setCheckText(false);
       return;
     }
-  };
-
-  const handleFoucus = (setTouced) => {
-    setTouced(true);
   };
 
   const handlecheckDuplicateNickName = async () => {
@@ -465,24 +455,32 @@ const Join = ({ navigation }) => {
                 </View>
                 <View style={{ gap: 15, paddingTop: 20 }}>
                   <Text style={{ fontSize: 16, color: "#000" }}>비밀번호</Text>
-                  <TextInput
-                    style={[
-                      styles.joinInputOverlab,
-                      errorText &&
-                        !password.trim() && { borderBottomColor: "red" },
-                    ]}
-                    value={password}
-                    onChangeText={(text) => onChangePwd(text)}
-                    secureTextEntry={eye}
-                    ref={passwordRef}
-                    onSubmitEditing={handleValidatePwd}
-                    autoCapitalize="none"
-                    blurOnSubmit={false}
-                    returnKeyType="next"
-                  />
-                  {pwdErrorText ? (
-                    <Text style={{ color: "red" }}>{pwdErrorText}</Text>
-                  ) : null}
+                  <View>
+                    <TextInput
+                      style={[
+                        styles.joinInputOverlab,
+                        errorText &&
+                          !password.trim() && { borderBottomColor: "red" },
+                      ]}
+                      value={password}
+                      onChangeText={(text) => onChangePwd(text)}
+                      secureTextEntry={eye}
+                      ref={passwordRef}
+                      onSubmitEditing={handleValidatePwd}
+                      autoCapitalize="none"
+                      blurOnSubmit={false}
+                      returnKeyType="next"
+                    />
+                    <TouchableOpacity
+                      onPress={eyeToggle}
+                      style={{ position: "absolute", top: 12, right: 15 }}
+                    >
+                      <Icon_AntDesign name={eye ? "eyeo" : "eye"} size={25} />
+                    </TouchableOpacity>
+                    {pwdErrorText ? (
+                      <Text style={{ color: "red" }}>{pwdErrorText}</Text>
+                    ) : null}
+                  </View>
                 </View>
                 <View style={{ gap: 15, paddingTop: 20 }}>
                   <Text style={{ fontSize: 16, color: "#000" }}>
