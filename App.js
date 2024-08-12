@@ -42,6 +42,8 @@ import Setting from "./src/assets/Setting";
 import CommunityDetail from "./src/assets/CommunityDetail";
 import SocialWebView from "./src/assets/social/SocialWebView";
 import SocialLoginRedirect from "./src/assets/social/SocialLoginRedirect";
+import UseEmailSearchId from "./src/assets/UseEmailSearchId";
+import ResetPwd from "./src/assets/ResetPwd";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -114,6 +116,8 @@ function HomeStack() {
         name="SocialLoginRedirect"
         component={SocialLoginRedirect}
       />
+      <Stack.Screen name="UseEmailSearchId" component={UseEmailSearchId} />
+      <Stack.Screen name="ResetPwd" component={ResetPwd} />
     </Stack.Navigator>
   );
 }
