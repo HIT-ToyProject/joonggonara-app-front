@@ -21,12 +21,13 @@ import kakao from "./image/kakaotalk.png";
 import naver from "./image/naver.png";
 import google from "./image/google.png";
 import axios from "axios";
-import { setStorage } from "./TokenStorage";
+import { getStorage, removeStorage, setStorage } from "./TokenStorage";
+import api from "./Interceptor";
 
 const Login = ({ navigation }) => {
   const [idInput, setIdInput] = useState("");
   const [pwInput, setPwInput] = useState("");
-  const [eye, setEye] = useState("false");
+  const [eye, setEye] = useState("true");
   const [validInput, setValidInput] = useState("");
   const passwordInputRef = useRef();
 
@@ -64,9 +65,9 @@ const Login = ({ navigation }) => {
           "http://localhost:9090/user/login",
           loginRequest
         );
-        let token = response.headers.authorization;
-        if (token) {
-          await setStorage("token", token);
+        let accessToken = response.headers.authorization;
+        if (accessToken) {
+          setStorage("accessToken", accessToken);
           navigation.navigate("Home");
         }
       } catch (error) {

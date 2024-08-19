@@ -18,7 +18,6 @@ import {
 
 import axios from "axios";
 import { TouchableOpacity } from "react-native-gesture-handler";
-import Icon_AntDesign from "react-native-vector-icons/AntDesign";
 import { useNavigation } from "@react-navigation/native";
 
 const ResetPwd = ({ route }) => {
