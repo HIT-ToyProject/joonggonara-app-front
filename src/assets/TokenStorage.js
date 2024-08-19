@@ -1,4 +1,7 @@
 import EncryptedStorage from "react-native-encrypted-storage";
+import api from "./Interceptor";
+import axios from "axios";
+import { Alert } from "react-native";
 
 export const setStorage = async (key, value) => {
   return await EncryptedStorage.setItem(key, JSON.stringify(value));
@@ -11,4 +14,23 @@ export const getStorage = async (key) => {
 
 export const removeStorage = async (key) => {
   return await EncryptedStorage.removeItem(key);
+};
+
+export const reissueToken = async () => {
+  try {
+    const response = await axios.put(
+      "http://localhost:9090/user/login/reissue",
+      {
+        withCredentials: true,
+      }
+    );
+    let accessToken = response.headers.authorization;
+    if (accessToken) {
+      removeStorage("accessToken");
+      setStorage("accessToken", accessToken);
+      return accessToken;
+    }
+  } catch (error) {
+    throw error;
+  }
 };
