@@ -6,7 +6,7 @@
  * @format
  */
 import "react-native-gesture-handler";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -33,6 +33,7 @@ import { api } from "./assets/Interceptor";
 import sampleImg from "./assets/image/sample.jpg";
 import Icon_EvilIcons from "react-native-vector-icons/EvilIcons";
 import { useFocusEffect } from "@react-navigation/native";
+import { FlatList, RefreshControl } from "react-native-gesture-handler";
 
 const locationData = [
   { title: "哈尔滨工业大学" },
@@ -40,35 +41,70 @@ const locationData = [
   { title: "哈尔滨工程大学" },
 ];
 
-const Home = ({ navigation }) => {
+const Home = ({ route, navigation }) => {
   const [posts, setPosts] = useState([]);
   const [screenData, setScreenData] = useState([]);
   const [categoryType, setCategoryType] = useState("ALL");
   const [schoolType, setSchoolType] = useState("ALL");
   const [heart, setHeart] = useState({});
-  const [currentStyle, setCurrentStyle] = useState(columStyle);
+  const [currentStyle, setCurrentStyle] = useState(columnStyle);
+  const [refreshing, setRefreshing] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [keyword, setKeyword] = useState(null);
+  const [numColumns, setNumColumns] = useState(1);
 
-  const fetchScreens = async () => {
-    const url = "http://localhost:9090/board/search";
+  const fetchScreens = async (newPage = 0) => {
+    const url = "http://localhost:9090/board/search/list";
     const params = {
+      keyword: keyword,
       category: categoryType,
       school: schoolType,
       size: 5,
-      page: 0,
+      page: newPage,
     };
     try {
       const { data } = await api.get(url, { params });
-      setScreenData(data.content);
+      setScreenData((prevData) =>
+        newPage === 0 ? data.content : [...prevData, ...data.content]
+      );
+      setPage(newPage);
+      setRefreshing(false);
+      setIsLoadingMore(false);
     } catch (error) {
       console.error(error);
+      Alert.alert("에러", error.response.data.message);
     }
   };
+  useEffect(() => {
+    fetchScreens();
+  }, [categoryType, schoolType]);
+
   useFocusEffect(
-    React.useCallback(() => {
-      fetchScreens();
-    }, [categoryType, schoolType])
+    useCallback(() => {
+      if (route.params?.searchData && route.params?.keyword) {
+        setIsLoading(true);
+        setKeyword(route.params.keyword);
+        setScreenData(route.params.searchData.content);
+      }
+    }, [route.params?.searchData, route.params?.keyword])
   );
 
+  const onRefresh = () => {
+    setCategoryType("ALL");
+    setSchoolType("ALL");
+    setIsLoading(true);
+    setKeyword(null);
+    fetchScreens();
+  };
+
+  const onLoadMore = () => {
+    if (!isLoadingMore) {
+      setIsLoadingMore(true);
+      fetchScreens(page + 1);
+    }
+  };
   const handlePostCreated = (newPost) => {
     setPosts([newPost, ...posts]);
   };
@@ -77,14 +113,24 @@ const Home = ({ navigation }) => {
   const handleToggleChange = () => {
     setToggle(!toggle);
     if (!toggle) {
-      setCurrentStyle(columStyle);
+      setNumColumns(1);
+      setCurrentStyle(columnStyle);
     } else {
+      setNumColumns(2);
       setCurrentStyle(rowStyle);
     }
   };
 
   const ChangeBtnSearch = () => {
     navigation.navigate("HomeSearch", { screen: "HomeSearchScreenName" });
+  };
+
+  const moveWritePage = () => {
+    if (checkToken) {
+      navigation.navigate("HomeCreate", {
+        onPostCreated: handlePostCreated,
+      });
+    }
   };
 
   const checkToken = async () => {
@@ -97,9 +143,7 @@ const Home = ({ navigation }) => {
         },
       ]);
     } else {
-      navigation.navigate("HomeCreate", {
-        onPostCreated: handlePostCreated,
-      });
+      return true;
     }
   };
   const heartToggle = (id) => {
@@ -108,10 +152,48 @@ const Home = ({ navigation }) => {
       [id]: !prevHeart[id],
     }));
   };
-  const ChangeBtnDetail = async () => {
-    const token = await getStorage("token");
-    navigation.navigate("Detail", { screen: "DetailScreenName" });
+  const moveDetailPage = async () => {
+    if (checkToken()) {
+      navigation.navigate("Detail", { screen: "DetailScreenName" });
+    }
   };
+  const renderItem = ({ item }) => (
+    <View style={currentStyle.view}>
+      <View style={currentStyle.content_item}>
+        <TouchableOpacity
+          style={currentStyle.touchableOpacityStyle}
+          onPress={moveDetailPage}
+        >
+          <View>
+            <Image
+              style={currentStyle.content_img}
+              source={{
+                uri:
+                  item.photos[0].filePath + item.photos[0].fileName ||
+                  sampleImg,
+              }}
+            />
+            <TouchableOpacity onPress={() => heartToggle(item.id)}>
+              <Icon_AntDesign
+                name={heart[item.id] ? "heart" : "hearto"}
+                color={"#FEDB37"}
+                size={25}
+                style={currentStyle.heartIcon}
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.title}>{item.title}</Text>
+            <View style={styles.locationView}>
+              <Icon_EvilIcons name="location" size={30} color={"#FEDB37"} />
+              <Text style={styles.locationText}>{item.school}</Text>
+            </View>
+            <Text style={styles.price}>{item.price}元</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.main}>
@@ -120,13 +202,14 @@ const Home = ({ navigation }) => {
           <SelectDropdown
             data={locationData}
             onSelect={(selectedItem) => {
+              setIsLoading(false);
               setSchoolType(selectedItem.title);
             }}
             renderButton={(selectedItem, isOpened) => {
               return (
                 <View style={styles.dropdownButtonStyle}>
                   <Text style={styles.dropdownButtonTxtStyle}>
-                    {(selectedItem && selectedItem.title) ||
+                    {(!isLoading && selectedItem && selectedItem.title) ||
                       "학교를 선택해주세요."}
                   </Text>
                   <Icon_AntDesign
@@ -206,118 +289,31 @@ const Home = ({ navigation }) => {
         </TouchableOpacity>
       </View>
       <View style={currentStyle.content}>
-        <ScrollView>
-          <View style={currentStyle.view}>
-            {screenData.length > 0 ? (
-              screenData.map((item) => (
-                <View key={item.id} style={currentStyle.content_item}>
-                  <TouchableOpacity
-                    style={currentStyle.touchableOpacityStyle}
-                    onPress={ChangeBtnDetail}
-                  >
-                    <View>
-                      <Image
-                        style={currentStyle.content_img}
-                        source={{
-                          uri:
-                            item.photos[0].filePath + item.photos[0].fileName ||
-                            sampleImg,
-                        }}
-                      />
-                      <TouchableOpacity onPress={() => heartToggle(item.id)}>
-                        {!heart[item.id] ? (
-                          <Icon_AntDesign
-                            name="hearto"
-                            color={"#FEDB37"}
-                            size={25}
-                            style={{
-                              position: "absolute",
-                              bottom: 4,
-                              right: 4,
-                            }}
-                          />
-                        ) : (
-                          <Icon_AntDesign
-                            name="heart"
-                            color={"#FEDB37"}
-                            size={25}
-                            style={currentStyle.heartIcon}
-                          />
-                        )}
-                      </TouchableOpacity>
-                    </View>
-                    <View
-                      style={{
-                        justifyContent: "center",
-                        gap: 5,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 16,
-                          fontWeight: "500",
-                          marginLeft: 5,
-                          color: "#000",
-                        }}
-                      >
-                        {item.title}
-                      </Text>
-                      <View style={currentStyle.locationView}>
-                        <Icon_EvilIcons
-                          name="location"
-                          size={30}
-                          color={"#FEDB37"}
-                        />
-                        <Text
-                          style={{
-                            fontSize: 13,
-                            color: "#9EA1A9",
-                          }}
-                        >
-                          {item.location}
-                        </Text>
-                      </View>
-                      <Text
-                        style={{
-                          fontSize: 16,
-                          fontWeight: "600",
-                          marginLeft: 5,
-                          color: "#000",
-                        }}
-                      >
-                        {item.price}元
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                </View>
-              ))
-            ) : (
-              <View style={{ marginTop: 30 }}>
-                <Text
-                  style={{
-                    justifyContent: "center", // 박스 내 텍스트 수직 중앙 정렬
-                    alignItems: "center",
-                  }}
-                >
-                  No items to display
-                </Text>
-              </View>
-            )}
-          </View>
-        </ScrollView>
+        <FlatList
+          data={screenData}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderItem}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          numColumns={numColumns}
+          key={numColumns}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No items to display</Text>
+            </View>
+          }
+          onEndReached={onLoadMore}
+          onEndReachedThreshold={0.5}
+        />
       </View>
-      <View>
+      <View style={{ position: "absolute", bottom: 10, right: 10 }}>
         <TouchableOpacity
           style={{
-            position: "absolute",
-            bottom: 10,
-            right: 10,
             backgroundColor: "#FEDB37",
             borderRadius: 50,
           }}
-          onPress={() => {
-            checkToken();
-          }}
+          onPress={moveWritePage}
         >
           <Icon_Entypo name="plus" color={"white"} size={50} />
         </TouchableOpacity>
@@ -326,14 +322,14 @@ const Home = ({ navigation }) => {
   );
 };
 
-const columStyle = StyleSheet.create({
+const columnStyle = StyleSheet.create({
   view: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
   content: {
-    flex: 13,
+    flex: 1,
     width: "100%",
     flexDirection: "row",
     marginTop: 10,
@@ -369,11 +365,6 @@ const columStyle = StyleSheet.create({
     gap: 20,
     width: "100%",
   },
-  locationView: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
   heartIcon: {
     position: "absolute",
     bottom: 4,
@@ -386,13 +377,12 @@ const rowStyle = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "center",
-    gap: 15,
+    justifyContent: "space-around",
+    paddingTop: 10,
   },
   content: {
-    flex: 13,
+    flex: 1,
     width: "100%",
-    flexDirection: "row",
     marginTop: 10,
   },
   content_item: {
@@ -486,6 +476,41 @@ const styles = StyleSheet.create({
   locationView: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#888",
+  },
+  textContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 5,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginLeft: 5,
+    color: "#000",
+  },
+  locationView: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  locationText: {
+    fontSize: 13,
+    color: "#9EA1A9",
+  },
+  price: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginLeft: 5,
+    color: "#000",
   },
 });
 
