@@ -29,7 +29,8 @@ const setupApi = (navigation) => {
           case "UNSUPPORTED_TOKEN":
           case "AUTHENTICATION_ERROR":
           case "ALREADY_LOGGED_OUT_USER":
-          case "NOT_EXIST_AUTHORIZATION": {
+          case "NOT_EXIST_AUTHORIZATION":
+          case "NOT_EXIST_USER": {
             Alert.alert("에러", errorMessage, [
               {
                 text: "확인",

@@ -152,9 +152,12 @@ const Home = ({ route, navigation }) => {
       [id]: !prevHeart[id],
     }));
   };
-  const moveDetailPage = async () => {
+  const moveDetailPage = (item) => {
     if (checkToken()) {
-      navigation.navigate("Detail", { screen: "DetailScreenName" });
+      navigation.navigate("Detail", {
+        screen: "DetailScreenName",
+        data: item,
+      });
     }
   };
   const renderItem = ({ item }) => (
@@ -162,7 +165,7 @@ const Home = ({ route, navigation }) => {
       <View style={currentStyle.content_item}>
         <TouchableOpacity
           style={currentStyle.touchableOpacityStyle}
-          onPress={moveDetailPage}
+          onPress={() => moveDetailPage(item)}
         >
           <View>
             <Image

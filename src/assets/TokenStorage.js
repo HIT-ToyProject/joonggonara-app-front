@@ -1,7 +1,5 @@
 import EncryptedStorage from "react-native-encrypted-storage";
-import api from "./Interceptor";
 import axios from "axios";
-import { Alert } from "react-native";
 
 export const setStorage = async (key, value) => {
   return await EncryptedStorage.setItem(key, JSON.stringify(value));
