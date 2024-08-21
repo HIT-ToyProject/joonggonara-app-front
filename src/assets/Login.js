@@ -66,8 +66,10 @@ const Login = ({ navigation }) => {
           loginRequest
         );
         let accessToken = response.headers.authorization;
+
         if (accessToken) {
           setStorage("accessToken", accessToken);
+          setStorage("userInfo", response.data);
           navigation.navigate("Home");
         }
       } catch (error) {
