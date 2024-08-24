@@ -66,11 +66,11 @@ const Login = ({ navigation }) => {
           loginRequest
         );
         let accessToken = response.headers.authorization;
-
-        if (accessToken) {
-          setStorage("accessToken", accessToken);
-          setStorage("userInfo", response.data);
-          navigation.navigate("Home");
+        const userId = response.data.userId;
+        if (response && response.data && accessToken) {
+          setStorage(`accessToken`, accessToken);
+          setStorage(`userInfo`, response.data);
+          navigation.navigate("Home", { userId: userId });
         }
       } catch (error) {
         Alert.alert("에러", error.response.data.message);

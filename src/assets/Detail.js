@@ -5,7 +5,7 @@
  *
  * @format
  */
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -15,14 +15,21 @@ import {
   ScrollView,
   Image,
   TextInput,
+  Alert,
 } from "react-native";
 import Icon_AntDesign from "react-native-vector-icons/AntDesign";
 import sampleImg from "./image/sample.jpg";
 import sampleImg2 from "./image/sample2.jpg";
 import Swiper from "react-native-web-swiper";
+import { getStorage } from "./TokenStorage";
+import { api, setupApi } from "./Interceptor";
 
 const Detail = ({ route, navigation }) => {
   const data = route.params.data;
+
+  useEffect(() => {
+    setupApi(navigation);
+  }, []);
 
   const [heart, setHeart] = useState(false);
   const heartToggle = () => {
@@ -49,6 +56,34 @@ const Detail = ({ route, navigation }) => {
       return `${diffInMonths}개월 전`;
     } else {
       return `${diffInYears}년 전`;
+    }
+  };
+
+  const moveChatRoom = async () => {
+    const user = await getStorage("userInfo");
+    console.log(user);
+    const chatRoomRequest = {
+      profile: data.memberResponse.profile,
+      buyerNickName: user.nickName,
+      sellerNickName: data.memberResponse.nickName,
+      nickName: data.nickName,
+    };
+
+    const url = "/chat/room/create";
+
+    try {
+      const response = await api.post(url, chatRoomRequest);
+      if (response && response.data) {
+        navigation.navigate("Chatting", {
+          roomId: response.data.roomId,
+          roomName: response.data.roomName,
+          senderNickName: response.data.nickName,
+          chatRoomStatus: "BUYER",
+        });
+      }
+    } catch (error) {
+      console.log(error.response.data.message);
+      Alert.alert("에러", error.response.data.message);
     }
   };
 
@@ -182,7 +217,7 @@ const Detail = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
         <View style={{ width: "75%" }}>
-          <TouchableOpacity style={styles.footerBtn}>
+          <TouchableOpacity style={styles.footerBtn} onPress={moveChatRoom}>
             <Text style={styles.footerText}>문의하기</Text>
           </TouchableOpacity>
         </View>

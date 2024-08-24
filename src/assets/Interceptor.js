@@ -6,7 +6,7 @@ const api = axios.create({
   baseURL: "http://localhost:9090",
   timeout: 1000,
 });
-const setupApi = (navigation) => {
+const setupApi = (navigation, userId) => {
   api.interceptors.request.use(
     async (config) => {
       const accessToken = await getStorage("accessToken");
@@ -37,7 +37,7 @@ const setupApi = (navigation) => {
                 onPress: () => navigation.navigate("Login"),
               },
             ]);
-            return;
+            return Promise.reject(error);
           }
           case "EXPIRED_TOKEN": {
             try {
@@ -62,10 +62,14 @@ const setupApi = (navigation) => {
                 },
               ]
             );
+            return Promise.reject(error);
+          }
+          default: {
+            return Promise.reject(error);
           }
         }
-        return Promise.reject(error);
       }
+      return Promise.reject(error);
     }
   );
 };

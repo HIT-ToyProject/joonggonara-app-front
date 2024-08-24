@@ -34,6 +34,7 @@ import sampleImg from "./assets/image/sample.jpg";
 import Icon_EvilIcons from "react-native-vector-icons/EvilIcons";
 import { useFocusEffect } from "@react-navigation/native";
 import { FlatList, RefreshControl } from "react-native-gesture-handler";
+import axios from "axios";
 
 const locationData = [
   { title: "哈尔滨工业大学" },
@@ -42,7 +43,6 @@ const locationData = [
 ];
 
 const Home = ({ route, navigation }) => {
-  const [posts, setPosts] = useState([]);
   const [screenData, setScreenData] = useState([]);
   const [categoryType, setCategoryType] = useState("ALL");
   const [schoolType, setSchoolType] = useState("ALL");
@@ -65,7 +65,7 @@ const Home = ({ route, navigation }) => {
       page: newPage,
     };
     try {
-      const { data } = await api.get(url, { params });
+      const { data } = await axios.get(url, { params });
       setScreenData((prevData) =>
         newPage === 0 ? data.content : [...prevData, ...data.content]
       );
@@ -90,6 +90,12 @@ const Home = ({ route, navigation }) => {
       }
     }, [route.params?.searchData, route.params?.keyword])
   );
+  useEffect(() => {
+    console.log(route.params?.productData);
+    if (route.params?.productData) {
+      setScreenData([route.params?.productData, ...screenData]);
+    }
+  }, [route.params?.productData]);
 
   const onRefresh = () => {
     setCategoryType("ALL");
@@ -104,9 +110,6 @@ const Home = ({ route, navigation }) => {
       setIsLoadingMore(true);
       fetchScreens(page + 1);
     }
-  };
-  const handlePostCreated = (newPost) => {
-    setPosts([newPost, ...posts]);
   };
 
   const [toggle, setToggle] = useState(true);
@@ -125,16 +128,14 @@ const Home = ({ route, navigation }) => {
     navigation.navigate("HomeSearch", { screen: "HomeSearchScreenName" });
   };
 
-  const moveWritePage = () => {
-    if (checkToken) {
-      navigation.navigate("HomeCreate", {
-        onPostCreated: handlePostCreated,
-      });
+  const moveWritePage = async () => {
+    if (await checkToken()) {
+      navigation.navigate("HomeCreate");
     }
   };
 
   const checkToken = async () => {
-    const token = await getStorage("token");
+    const token = await getStorage(`accessToken`);
     if (!token) {
       Alert.alert("알림", "로그인 후 이용해주세요!", [
         {
@@ -142,6 +143,7 @@ const Home = ({ route, navigation }) => {
           onPress: () => navigation.navigate("Login"),
         },
       ]);
+      return false;
     } else {
       return true;
     }
@@ -152,51 +154,56 @@ const Home = ({ route, navigation }) => {
       [id]: !prevHeart[id],
     }));
   };
-  const moveDetailPage = (item) => {
-    if (checkToken()) {
+  const moveDetailPage = async (item) => {
+    if (await checkToken()) {
       navigation.navigate("Detail", {
         screen: "DetailScreenName",
         data: item,
       });
     }
   };
-  const renderItem = ({ item }) => (
-    <View style={currentStyle.view}>
-      <View style={currentStyle.content_item}>
-        <TouchableOpacity
-          style={currentStyle.touchableOpacityStyle}
-          onPress={() => moveDetailPage(item)}
-        >
-          <View>
-            <Image
-              style={currentStyle.content_img}
-              source={{
-                uri:
-                  item.photos[0].filePath + item.photos[0].fileName ||
-                  sampleImg,
-              }}
-            />
-            <TouchableOpacity onPress={() => heartToggle(item.id)}>
-              <Icon_AntDesign
-                name={heart[item.id] ? "heart" : "hearto"}
-                color={"#FEDB37"}
-                size={25}
-                style={currentStyle.heartIcon}
+  const renderItem = ({ item }) => {
+    if (!item) return null;
+    return (
+      <View style={currentStyle.view}>
+        <View style={currentStyle.content_item}>
+          <TouchableOpacity
+            style={currentStyle.touchableOpacityStyle}
+            onPress={() => moveDetailPage(item)}
+          >
+            <View>
+              <Image
+                style={currentStyle.content_img}
+                source={{
+                  uri:
+                    item.photos[0].filePath + item.photos[0].fileName ||
+                    sampleImg,
+                }}
               />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.textContainer}>
-            <Text style={styles.title}>{item.title}</Text>
-            <View style={styles.locationView}>
-              <Icon_EvilIcons name="location" size={30} color={"#FEDB37"} />
-              <Text style={styles.locationText}>{item.school}</Text>
+              <TouchableOpacity onPress={() => heartToggle(item.id)}>
+                <Icon_AntDesign
+                  name={heart[item.id] ? "heart" : "hearto"}
+                  color={"#FEDB37"}
+                  size={25}
+                  style={currentStyle.heartIcon}
+                />
+              </TouchableOpacity>
             </View>
-            <Text style={styles.price}>{item.price}元</Text>
-          </View>
-        </TouchableOpacity>
+            <View style={styles.textContainer}>
+              <Text style={styles.title}>{item.title}</Text>
+              <View style={styles.locationView}>
+                <Icon_EvilIcons name="location" size={30} color={"#FEDB37"} />
+                <Text style={styles.locationText}>{item.school}</Text>
+              </View>
+              <Text style={styles.price}>
+                {item.price && `${item.price}元`}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.main}>
@@ -294,7 +301,7 @@ const Home = ({ route, navigation }) => {
       <View style={currentStyle.content}>
         <FlatList
           data={screenData}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item, index) => String(item.id)}
           renderItem={renderItem}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
