@@ -26,13 +26,14 @@ import SelectDropdown from "react-native-select-dropdown";
 import { getStorage } from "./TokenStorage";
 import axios from "axios";
 
-const HomeCreate = ({ navigation }) => {
+const HomeCreate = ({ route, navigation }) => {
   const [titleInput, setTitleInput] = useState("");
   const [priceInput, setPriceInput] = useState("");
   const [contentInput, setContentInput] = useState("");
   const [school, setSchool] = useState("");
 
   const [selected, setSelected] = useState("의류");
+
   const categories = [
     "의류",
     "도서",
@@ -120,6 +121,17 @@ const HomeCreate = ({ navigation }) => {
     }
   };
 
+  const moveHome = (productData) => {
+    console.log("productData: ", productData);
+    navigation.navigate({
+      name: "Home",
+      params: {
+        productData: productData,
+      },
+      merge: true,
+    });
+  };
+
   const submitProduct = async () => {
     const url = "/board/write";
     const formData = new FormData();
@@ -147,15 +159,17 @@ const HomeCreate = ({ navigation }) => {
 
     try {
       const response = await api.post(url, formData);
-      if (response.data) {
+      if (response && response.data) {
         Alert.alert("성공", "상품이 업로드 되었습니다!", [
           {
             text: "확인",
-            onPress: () => navigation.navigate("Home"),
+            onPress: () => moveHome(response.data),
           },
         ]);
       }
-    } catch (error) {}
+    } catch (error) {
+      Alert.alert("에러", error.response.data.message);
+    }
   };
 
   return (
