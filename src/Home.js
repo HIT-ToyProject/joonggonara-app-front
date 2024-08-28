@@ -73,13 +73,14 @@ const Home = ({ route, navigation }) => {
       setRefreshing(false);
       setIsLoadingMore(false);
     } catch (error) {
-      console.error(error);
       Alert.alert("에러", error.response.data.message);
     }
   };
-  useEffect(() => {
-    fetchScreens();
-  }, [categoryType, schoolType]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchScreens();
+    }, [categoryType, schoolType])
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -91,7 +92,6 @@ const Home = ({ route, navigation }) => {
     }, [route.params?.searchData, route.params?.keyword])
   );
   useEffect(() => {
-    console.log(route.params?.productData);
     if (route.params?.productData) {
       setScreenData([route.params?.productData, ...screenData]);
     }
@@ -155,10 +155,12 @@ const Home = ({ route, navigation }) => {
     }));
   };
   const moveDetailPage = async (item) => {
+    const userInfo = await getStorage("userInfo");
     if (await checkToken()) {
       navigation.navigate("Detail", {
         screen: "DetailScreenName",
         data: item,
+        nickName: userInfo.nickName,
       });
     }
   };
@@ -195,9 +197,17 @@ const Home = ({ route, navigation }) => {
                 <Icon_EvilIcons name="location" size={30} color={"#FEDB37"} />
                 <Text style={styles.locationText}>{item.school}</Text>
               </View>
-              <Text style={styles.price}>
-                {item.price && `${item.price}元`}
-              </Text>
+              <View style={styles.priceView}>
+                {item.isSoldOut ? (
+                  <Text style={styles.doneDeal}>
+                    {item.isSoldOut ? "거래 완료" : null}
+                  </Text>
+                ) : null}
+
+                <Text style={styles.price}>
+                  {item.price && `${item.price}元`}
+                </Text>
+              </View>
             </View>
           </TouchableOpacity>
         </View>
@@ -498,7 +508,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     justifyContent: "center",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 5,
   },
   title: {
@@ -521,6 +531,25 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginLeft: 5,
     color: "#000",
+  },
+  priceView: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  doneDeal: {
+    fontWeight: "bold",
+    padding: 5,
+    borderWidth: 1.5,
+    borderColor: "#333",
+    borderRadius: 5,
+    shadowColor: "#00300",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 });
 
