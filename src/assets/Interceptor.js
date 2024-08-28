@@ -6,7 +6,9 @@ const api = axios.create({
   baseURL: "http://localhost:9090",
   timeout: 1000,
 });
-const setupApi = (navigation, userId) => {
+const setupApi = (navigation) => {
+  let isRefreshing = false;
+
   api.interceptors.request.use(
     async (config) => {
       const accessToken = await getStorage("accessToken");
@@ -15,7 +17,9 @@ const setupApi = (navigation, userId) => {
       }
       return config;
     },
-    (error) => Promise.reject(error)
+    (error) => {
+      Promise.reject(error);
+    }
   );
   api.interceptors.response.use(
     (response) => response,
@@ -34,21 +38,28 @@ const setupApi = (navigation, userId) => {
             Alert.alert("에러", errorMessage, [
               {
                 text: "확인",
-                onPress: () => navigation.navigate("Login"),
+                onPress: () => {
+                  navigation.navigate("Login");
+                },
               },
             ]);
-            return Promise.reject(error);
+            return;
           }
           case "EXPIRED_TOKEN": {
-            try {
-              const accessToken = await reissueToken();
-              if (accessToken) {
-                error.config.headers.Authorization = accessToken;
-                return api(error.config);
+            if (!isRefreshing) {
+              isRefreshing = true;
+              try {
+                const accessToken = await reissueToken();
+                if (accessToken) {
+                  error.config.headers.Authorization = accessToken;
+                  return api(error.config);
+                }
+              } catch (error) {
+                Alert.alert("에러", error.response.data.message);
+                return;
               }
-            } catch (error) {
-              return Promise.reject(error);
             }
+            return;
           }
           case "REFRESH_TOKEN_EXPIRED_TOKEN": {
             removeStorage("accessToken");
@@ -62,7 +73,7 @@ const setupApi = (navigation, userId) => {
                 },
               ]
             );
-            return Promise.reject(error);
+            return;
           }
           default: {
             return Promise.reject(error);
