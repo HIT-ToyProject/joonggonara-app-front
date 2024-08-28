@@ -18,7 +18,6 @@ import {
   Alert,
 } from "react-native";
 import Icon_AntDesign from "react-native-vector-icons/AntDesign";
-import sampleImg from "./image/sample.jpg";
 import sampleImg2 from "./image/sample2.jpg";
 import Swiper from "react-native-web-swiper";
 import { getStorage } from "./TokenStorage";
@@ -26,7 +25,7 @@ import { api, setupApi } from "./Interceptor";
 
 const Detail = ({ route, navigation }) => {
   const data = route.params.data;
-
+  const nickName = route.params.nickName;
   useEffect(() => {
     setupApi(navigation);
   }, []);
@@ -60,29 +59,28 @@ const Detail = ({ route, navigation }) => {
   };
 
   const moveChatRoom = async () => {
-    const user = await getStorage("userInfo");
-    console.log(user);
     const chatRoomRequest = {
       profile: data.memberResponse.profile,
-      buyerNickName: user.nickName,
+      buyerNickName: nickName,
       sellerNickName: data.memberResponse.nickName,
-      nickName: data.nickName,
     };
 
-    const url = "/chat/room/create";
+    const url = "/chat/room/create/" + data.id;
 
     try {
       const response = await api.post(url, chatRoomRequest);
+
       if (response && response.data) {
         navigation.navigate("Chatting", {
           roomId: response.data.roomId,
           roomName: response.data.roomName,
-          senderNickName: response.data.nickName,
+          senderNickName: nickName,
           chatRoomStatus: "BUYER",
+          product: response.data.productResponse,
+          profile: response.data.productResponse.memberResponse.profile,
         });
       }
     } catch (error) {
-      console.log(error.response.data.message);
       Alert.alert("에러", error.response.data.message);
     }
   };
@@ -217,9 +215,11 @@ const Detail = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
         <View style={{ width: "75%" }}>
-          <TouchableOpacity style={styles.footerBtn} onPress={moveChatRoom}>
-            <Text style={styles.footerText}>문의하기</Text>
-          </TouchableOpacity>
+          {nickName === data.memberResponse.nickName ? null : (
+            <TouchableOpacity style={styles.footerBtn} onPress={moveChatRoom}>
+              <Text style={styles.footerText}>문의하기</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -241,12 +241,13 @@ const styles = StyleSheet.create({
   },
   title: {
     width: "90%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "flex-start",
+    gap: 5,
   },
   titleText: {
-    fontSize: 24,
+    fontSize: 20,
     color: "rgba(0, 0, 0, 1)",
     fontWeight: "bold",
   },

@@ -10,13 +10,19 @@
 import React, { useEffect } from "react";
 import "react-native-gesture-handler";
 import SplashScreen from "react-native-splash-screen";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import {
   createStackNavigator,
   CardStyleInterpolators,
 } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { StyleSheet, Platform } from "react-native";
+import {
+  StyleSheet,
+  Platform,
+  TouchableWithoutFeedback,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import Home from "./src/Home";
 import Community from "./src/Community";
@@ -44,6 +50,8 @@ import SocialWebView from "./src/assets/social/SocialWebView";
 import SocialLoginRedirect from "./src/assets/social/SocialLoginRedirect";
 import UseEmailSearchId from "./src/assets/UseEmailSearchId";
 import ResetPwd from "./src/assets/ResetPwd";
+import UpdateUserInfo from "./src/assets/UpdateUserInfo";
+import { getStorage } from "./src/assets/TokenStorage";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -118,6 +126,14 @@ function HomeStack() {
       />
       <Stack.Screen name="UseEmailSearchId" component={UseEmailSearchId} />
       <Stack.Screen name="ResetPwd" component={ResetPwd} />
+      <Stack.Screen name="Chatting" component={Chatting} />
+      <Stack.Screen
+        name="UpdateUserInfo"
+        component={UpdateUserInfo}
+        options={{
+          tabBarStyle: { display: "none" },
+        }}
+      />
     </Stack.Navigator>
   );
 }
@@ -183,6 +199,7 @@ function MypageReadMore() {
       <Stack.Screen name="Mypage" component={Mypage} />
       <Stack.Screen name="ReadMoreSell" component={ReadMoreSell} />
       <Stack.Screen name="ReadMoreBuy" component={ReadMoreBuy} />
+      <Stack.Screen name="UpdateUserInfo" component={UpdateUserInfo} />
       <Stack.Screen
         name="Setting"
         component={Setting}
@@ -224,10 +241,25 @@ const App = () => {
     }, 1000);
   }, []);
 
+  const checkTokenHandle = async (navigation) => {
+    const token = await getStorage(`accessToken`);
+    if (!token) {
+      Alert.alert("알림", "로그인 후 이용해주세요!", [
+        {
+          text: "로그인 창으로 이동",
+          onPress: () => navigation.navigate("Login"),
+        },
+      ]);
+      return false;
+    } else {
+      return true;
+    }
+  };
+
   return (
     <NavigationContainer>
       <Tab.Navigator
-        screenOptions={({ route }) => ({
+        screenOptions={({ route, navigation }) => ({
           tabBarActiveTintColor: "#FEDB37",
           headerShown: false,
           tabBarStyle: {
@@ -240,6 +272,20 @@ const App = () => {
               },
             }),
           },
+          tabBarButton: (props) => (
+            <TouchableOpacity
+              {...props}
+              onPress={async () => {
+                if (route.name === "홈") props.onPress();
+                else {
+                  const checkToken = await checkTokenHandle(navigation);
+                  if (checkToken) {
+                    props.onPress();
+                  }
+                }
+              }}
+            />
+          ),
         })}
       >
         <Tab.Screen
