@@ -83,9 +83,14 @@ const Login = ({ navigation }) => {
         "http://localhost:9090/user/login/oauth2",
         { params: { loginType: type } }
       );
-      navigation.navigate("WebView", { uri: response.data, loginType: type });
+
+      if (response && response.data) {
+        navigation.navigate("WebView", { uri: response.data, loginType: type });
+        return;
+      }
     } catch (error) {
       console.error(error);
+      Alert.alert("에러", error.response.data.message);
     }
   };
 
@@ -160,11 +165,10 @@ const Login = ({ navigation }) => {
             >
               <Image source={kakao} style={styles.easyLoginImg} />
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => submitSocialLogin(loginType.NAVER)}
+            >
               <Image source={naver} style={styles.easyLoginImg} />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Image source={google} style={styles.easyLoginImg} />
             </TouchableOpacity>
           </View>
           <View

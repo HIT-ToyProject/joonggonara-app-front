@@ -21,49 +21,40 @@ import {
 import { typescale } from "react-native-paper/lib/typescript/styles/themes/v3/tokens";
 import Icon_AntDesign from "react-native-vector-icons/AntDesign";
 
-const Join = ({ route, navigation }) => {
-  const [idInput, setIdInput] = useState("");
-  const [duplicateId, setDuplicateId] = useState("");
+const SocialJoin = ({ route, navigation }) => {
+  const [email, setEmail] = useState("");
+  const [profile, setProfile] = useState("");
+  const [loginType, setLoginType] = useState("");
   const [nickName, setNickName] = useState("");
   const [duplicateNickName, setDuplicateNickName] = useState("");
-  const [password, setPassword] = useState("");
-  const [checkPassword, setCheckPassword] = useState("");
-  const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
 
   const [errorText, setErrorText] = useState(false);
-  const [pwdErrorText, setPwdErrorText] = useState("");
-  const [checkPwdErrorText, setCheckPwdErrorText] = useState("");
-  const [emailErrorText, setEmailErrorText] = useState("");
 
   const nickNameRef = useRef();
-  const idRef = useRef();
-  const passwordRef = useRef();
-  const checkPasswordRef = useRef();
-  const emailRef = useRef();
   const nameRef = useRef();
   const phoneRef = useRef();
   const checkNumberRef = useRef();
 
   const [checkNickName, setCheckNickName] = useState(false);
-  const [checkId, setCheckId] = useState(false);
-  const [eye, setEye] = useState("false");
 
   const [minutes, setMinutes] = useState(3);
   const [seconds, setSeconds] = useState(0);
-  const [sendVerificationCodeStatus, setSendVerificationCodeStatus] =
-    useState(false);
+
   const [checkVerificationCodeStatus, setCheckVerificationCodeStatus] =
     useState(false);
   const [verificaationCodeDisable, setVerificationCodeDisable] =
     useState(false);
+  const [sendVerificationCodeStatus, setSendVerificationCodeStatus] =
+    useState(false);
 
-  const eyeToggle = () => {
-    setEye(!eye);
-  };
+  useEffect(() => {
+    setEmail(route.params?.email);
+    setProfile(route.params?.profile);
+    setLoginType(route.params?.loginType);
+  }, [route.params?.email, route.params?.profile, route.params?.loginType]);
 
   const onChangeText = (
     text,
@@ -95,95 +86,13 @@ const Join = ({ route, navigation }) => {
         Alert.alert("중복검사", "사용 가능한 닉네임입니다.");
         setCheckNickName(true);
         setDuplicateNickName(nickName);
-        idRef.current.focus();
+        name.current.focus();
         return;
       }
     } catch (error) {
       Alert.alert("에러", error.response.data.message);
     }
   };
-
-  const handleCheckId = async () => {
-    if (!idInput.trim()) {
-      setErrorText(true);
-      return;
-    }
-    setErrorText(false);
-    const url = "http://localhost:9090/user/signUp/duplicateUserId";
-
-    try {
-      const response = await axios.get(url, { params: { userId: idInput } });
-
-      if (response.data) {
-        Alert.alert("중복검사", "사용 가능한 닉네임입니다.");
-        setCheckId(true);
-        setDuplicateId(idInput);
-        return;
-      }
-    } catch (error) {
-      Alert.alert("에러", error.response.data.message);
-    }
-  };
-
-  const handleValidatePwd = () => {
-    if (!pwdErrorText) {
-      checkPasswordRef.current.focus();
-    }
-  };
-
-  const onChangePwd = (text) => {
-    setPassword(text);
-    const regex =
-      /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,16}$/;
-    if (regex.test(text)) {
-      setPwdErrorText("");
-      return;
-    } else {
-      setPwdErrorText(
-        "비밀번호는 8~16자 영문 대 소문자, 숫자, 특수문자를 사용해 주세요."
-      );
-    }
-  };
-
-  const onchangeCheckPwd = (text) => {
-    setCheckPassword(text);
-    if (!password.trim()) {
-      return;
-    }
-    if (password === text) {
-      setCheckPwdErrorText("");
-      return;
-    } else {
-      setCheckPwdErrorText("비밀번호가 일치하지 않습니다.");
-      return;
-    }
-  };
-
-  const handleCheckPassword = () => {
-    if (!checkPwdErrorText) {
-      emailRef.current.focus();
-    }
-  };
-
-  const handleEmail = () => {
-    if (!emailErrorText) {
-      nameRef.current.focus();
-    }
-  };
-
-  const onChangeEmail = (text) => {
-    setEmail(text);
-    const regex =
-      /^[A-Za-z0-9]([-_.]?[A-Za-z0-9])*@[A-Za-z0-9]([-_.]?[A-Za-z0-9])*\.[A-Za-z]{2,3}$/i;
-    if (regex.test(text)) {
-      setEmailErrorText("");
-      return;
-    } else {
-      setEmailErrorText("이메일 형식이 올바르지 않습니다.");
-      return;
-    }
-  };
-
   const handleName = () => {
     if (!name) {
       phoneRef.current.focus();
@@ -191,11 +100,11 @@ const Join = ({ route, navigation }) => {
   };
 
   const sendVerificationCode = async () => {
-    if (!phone.trim()) return;
+    if (!phoneNumber.trim()) return;
     else {
       const url = "http://localhost:9090/user/signUp/sms/verification";
       try {
-        const response = await axios.post(url, { phoneNumber: phone });
+        const response = await axios.post(url, { phoneNumber: phoneNumber });
         if (response.data) {
           Alert.alert("인증 코드", "인증 코드가 전송되었습니다.");
           setMinutes(3);
@@ -226,7 +135,7 @@ const Join = ({ route, navigation }) => {
   }, [seconds, minutes]);
 
   const checkverificationCode = async () => {
-    if (!phone.trim() && !sendVerificationCodeStatus) {
+    if (!phoneNumber.trim() && !sendVerificationCodeStatus) {
       alert("인증코드를 발송해주세요.");
       return;
     } else {
@@ -263,37 +172,13 @@ const Join = ({ route, navigation }) => {
       setErrorText(true);
       setNickName("");
       return;
-    } else if (
-      !idInput ||
-      !duplicateId ||
-      idInput !== duplicateId ||
-      !checkId
-    ) {
-      idRef.current.focus();
-      setErrorText(true);
-      setIdInput("");
-      return;
-    } else if (!password) {
-      passwordRef.current.focus();
-      setPassword("");
-      setErrorText(true);
-      return;
-    } else if (!checkPassword) {
-      checkPasswordRef.current.focus();
-      setCheckPassword("");
-      setErrorText(true);
-      return;
-    } else if (!email || emailErrorText) {
-      setEmail("");
-      setErrorText(true);
-      emailRef.current.focus();
     } else if (!name) {
       setName("");
       setErrorText(true);
       nameRef.current.focus();
     }
-    // else if (!phone) {
-    //   setPhone("");
+    // else if (!phoneNumber) {
+    //   setPhoneNumber("");
     //   setErrorText(true);
     //   phoneRef.current.focus();
     // } else if (!verificationCode || !checkVerificationCodeStatus) {
@@ -316,20 +201,17 @@ const Join = ({ route, navigation }) => {
 
   const submitJoin = async () => {
     try {
-      const url = "http://localhost:9090/user/signUp";
-      const signUpRequest = {
-        userId: idInput,
+      const url = "http://localhost:9090/user/social/signUp";
+      const socialSignUpRequest = {
         email: email,
-        password: password,
+        profile: profile,
         name: name,
         nickName: nickName,
-        phoneNumber: phone,
-        loginType: "GENERAL",
+        phoneNumber: phoneNumber,
+        loginType: loginType,
         isNotification: "true",
       };
-      const response = await axios.post(url, signUpRequest, {
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await axios.post(url, socialSignUpRequest);
       if (response.data) {
         Alert.alert("회원가입", "정상적으로 회원가입 되었습니다!", [
           {
@@ -339,7 +221,7 @@ const Join = ({ route, navigation }) => {
         ]);
       }
     } catch (error) {
-      console.error(error.response);
+      Alert.alert("에러", error.response.data.message);
     }
   };
 
@@ -417,113 +299,12 @@ const Join = ({ route, navigation }) => {
                   </View>
                 </View>
                 <View style={{ gap: 15, paddingTop: 20 }}>
-                  <Text style={{ fontSize: 16, color: "#000" }}>아이디</Text>
-                  <View style={{ flexDirection: "row", gap: 10 }}>
-                    <TextInput
-                      style={[
-                        styles.joinInputOverlab,
-                        errorText &&
-                          !idInput.trim() && { borderBottomColor: "red" },
-                      ]}
-                      value={idInput}
-                      onChangeText={(text) =>
-                        onChangeText(
-                          text,
-                          setIdInput,
-                          duplicateId,
-                          checkId,
-                          setCheckId
-                        )
-                      }
-                      ref={idRef}
-                      returnKeyType="next"
-                      blurOnSubmit={false}
-                      autoCapitalize="none"
-                    />
-                    <TouchableOpacity
-                      style={styles.overlap}
-                      onPress={handleCheckId}
-                    >
-                      <Text
-                        style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}
-                      >
-                        중복 확인
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                <View style={{ gap: 15, paddingTop: 20 }}>
-                  <Text style={{ fontSize: 16, color: "#000" }}>비밀번호</Text>
-                  <View>
-                    <TextInput
-                      style={[
-                        styles.joinInputOverlab,
-                        errorText &&
-                          !password.trim() && { borderBottomColor: "red" },
-                      ]}
-                      value={password}
-                      onChangeText={(text) => onChangePwd(text)}
-                      secureTextEntry={eye}
-                      ref={passwordRef}
-                      onSubmitEditing={handleValidatePwd}
-                      autoCapitalize="none"
-                      blurOnSubmit={false}
-                      returnKeyType="next"
-                    />
-                    <TouchableOpacity
-                      onPress={eyeToggle}
-                      style={{ position: "absolute", top: 12, right: 15 }}
-                    >
-                      <Icon_AntDesign name={eye ? "eyeo" : "eye"} size={25} />
-                    </TouchableOpacity>
-                    {pwdErrorText ? (
-                      <Text style={{ color: "red" }}>{pwdErrorText}</Text>
-                    ) : null}
-                  </View>
-                </View>
-                <View style={{ gap: 15, paddingTop: 20 }}>
-                  <Text style={{ fontSize: 16, color: "#000" }}>
-                    비밀번호 확인
-                  </Text>
-                  <TextInput
-                    style={[
-                      styles.joinInputOverlab,
-                      errorText &&
-                        !checkPassword.trim() && { borderBottomColor: "red" },
-                    ]}
-                    value={checkPassword}
-                    onChangeText={(text) => onchangeCheckPwd(text)}
-                    secureTextEntry={eye}
-                    ref={checkPasswordRef}
-                    onSubmitEditing={handleCheckPassword}
-                    autoCapitalize="none"
-                    blurOnSubmit={false}
-                    returnKeyType="next"
-                  />
-                  {checkPwdErrorText ? (
-                    <Text style={{ color: "red" }}>{checkPwdErrorText}</Text>
-                  ) : null}
-                </View>
-                <View style={{ gap: 15, paddingTop: 20 }}>
                   <Text style={{ fontSize: 16, color: "#000" }}>이메일</Text>
                   <TextInput
-                    style={[
-                      styles.joinInputOverlab,
-                      errorText &&
-                        !email.trim() && { borderBottomColor: "red" },
-                    ]}
+                    style={styles.joinInputOverlab}
                     value={email}
-                    onChangeText={(text) => onChangeEmail(text)}
-                    ref={emailRef}
-                    onSubmitEditing={handleEmail}
-                    autoCapitalize="none"
-                    blurOnSubmit={false}
-                    returnKeyType="next"
-                    inputMode="email"
+                    editable={false}
                   />
-                  {emailErrorText ? (
-                    <Text style={{ color: "red" }}>{emailErrorText}</Text>
-                  ) : null}
                 </View>
               </View>
               <View
@@ -564,10 +345,10 @@ const Join = ({ route, navigation }) => {
                       style={[
                         styles.joinInputOverlab,
                         errorText &&
-                          !phone.trim() && { borderBottomColor: "red" },
+                          !phoneNumber.trim() && { borderBottomColor: "red" },
                       ]}
-                      value={phone}
-                      onChangeText={setPhone}
+                      value={phoneNumber}
+                      onChangeText={setPhoneNumber}
                       ref={phoneRef}
                       onSubmitEditing={() => sendVerificationCode}
                       autoCapitalize="none"
@@ -727,4 +508,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Join;
+export default SocialJoin;

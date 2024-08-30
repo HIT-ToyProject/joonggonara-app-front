@@ -42,15 +42,11 @@ const Setting = ({ navigation }) => {
           try {
             const response = await api.delete(url);
             if (response && response.data) {
-              console.log(response.data);
+          
               Alert.alert("알림", "로그아웃 되었습니다.", [
                 {
                   text: "확인",
-                  onPress: async () => {
-                    removeStorage("accessToken");
-                    removeStorage("userInfo");
-                    navigation.navigate("Home");
-                  },
+                  onPress: () => moveHome(),
                 },
               ]);
             }
@@ -64,6 +60,43 @@ const Setting = ({ navigation }) => {
 
   const moveUpdateUserInfo = () => {
     navigation.navigate("UpdateUserInfo");
+  };
+
+  const moveHome = () => {
+    removeStorage("accessToken");
+    removeStorage("userInfo");
+    navigation.navigate("Home");
+  };
+
+  const withdrawal = () => {
+    const url = "/user/withdrawal";
+    Alert.alert("회원탈퇴", "정말로 회원탈퇴 하시겠습니까?", [
+      {
+        text: "취소",
+      },
+      {
+        text: "회원탈퇴",
+        onPress: async () => {
+          try {
+            const response = await api.delete(url);
+            if (response && response.data) {
+              Alert.alert(
+                "알림",
+                "회원탈퇴 되었습니다. 그동안 이용해 주셔서 감사합니다.",
+                [
+                  {
+                    text: "확인",
+                    onPress: () => moveHome(),
+                  },
+                ]
+              );
+            }
+          } catch (error) {
+            Alert.alert("에러", error.response.data.message);
+          }
+        },
+      },
+    ]);
   };
 
   return (
@@ -133,7 +166,7 @@ const Setting = ({ navigation }) => {
             <TouchableOpacity style={{ width: "100%" }} onPress={logoutHandle}>
               <Text style={{ fontSize: 16 }}>로그아웃</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={{ width: "100%" }}>
+            <TouchableOpacity style={{ width: "100%" }} onPress={withdrawal}>
               <Text style={{ fontSize: 16 }}>회원탈퇴</Text>
             </TouchableOpacity>
           </View>

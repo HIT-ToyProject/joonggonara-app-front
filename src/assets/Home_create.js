@@ -122,7 +122,6 @@ const HomeCreate = ({ route, navigation }) => {
   };
 
   const moveHome = (productData) => {
-    console.log("productData: ", productData);
     navigation.navigate({
       name: "Home",
       params: {

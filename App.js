@@ -52,6 +52,7 @@ import UseEmailSearchId from "./src/assets/UseEmailSearchId";
 import ResetPwd from "./src/assets/ResetPwd";
 import UpdateUserInfo from "./src/assets/UpdateUserInfo";
 import { getStorage } from "./src/assets/TokenStorage";
+import SocialJoin from "./src/assets/SocialJoin";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -127,6 +128,7 @@ function HomeStack() {
       <Stack.Screen name="UseEmailSearchId" component={UseEmailSearchId} />
       <Stack.Screen name="ResetPwd" component={ResetPwd} />
       <Stack.Screen name="Chatting" component={Chatting} />
+      <Stack.Screen name="SocialJoin" component={SocialJoin} />
       <Stack.Screen
         name="UpdateUserInfo"
         component={UpdateUserInfo}

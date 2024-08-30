@@ -57,7 +57,6 @@ const UseEmailSearchId = () => {
     };
     try {
       const response = await axios.post(url, findUserIdByEmailRequest);
-      console.log(response.data);
       if (response.data) {
         Alert.alert("인증 코드", "인증 코드가 전송되었습니다.");
         setMinutes(3);
@@ -105,7 +104,7 @@ const UseEmailSearchId = () => {
         `${nameInput}님의 아이디는 ${response.data.userId} 입니다.`,
         [
           {
-            text: "확인"
+            text: "확인",
           },
           {
             text: "로그인",

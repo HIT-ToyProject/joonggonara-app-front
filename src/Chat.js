@@ -87,7 +87,6 @@ const Chat = ({ navigation }) => {
   const headerChangeBtnToggle = async (chatRoom) => {
     setHeaderChagebtn(!headerChangeBtn);
     const product = await getProduct(chatRoom.roomId);
-    console.log(userInfo);
     navigation.navigate(
       "Chatting",
       {

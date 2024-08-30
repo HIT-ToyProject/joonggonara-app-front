@@ -1,20 +1,24 @@
-import React from "react";
+import React, { useRef } from "react";
 import { WebView } from "react-native-webview";
 import { SafeAreaView, useWindowDimensions } from "react-native";
 
 const SocialWebView = ({ navigation, route }) => {
   const width = useWindowDimensions().width;
   const height = useWindowDimensions().height;
-  const { uri } = route.params;
+  const uri = route.params.uri;
+  const loginType = route.params.loginType;
+  const hasRedirect = useRef(false);
 
   const HandlerOAuth2Login = (e) => {
-    console.log("e", e);
-    if (e.navigationType === "other" && e.url.split("code")[1]) {
-      navigation.navigate("SocialLoginRedirect", { uri: e.url });
-    }
-  };
+    const targetUri = "http://localhost:9090/user/login/oauth2/code/";
 
-  console.log(route.params.uri);
+    if (hasRedirect.current || !e.url.startsWith(targetUri)) return;
+    hasRedirect.current = true;
+    navigation.navigate("SocialLoginRedirect", {
+      uri: e.url,
+      loginType: loginType,
+    });
+  };
 
   return (
     <SafeAreaView
