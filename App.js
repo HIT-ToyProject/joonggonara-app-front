@@ -22,6 +22,8 @@ import {
   TouchableWithoutFeedback,
   TouchableOpacity,
   Alert,
+  NativeEventEmitter,
+  NativeModules,
 } from "react-native";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import Home from "./src/Home";
@@ -43,7 +45,6 @@ import SearchIdPw from "./src/assets/SearchIdPw";
 import SearchId from "./src/assets/SearchId";
 import SearchPw from "./src/assets/SearchPw";
 import HomeSearch from "./src/assets/HomeSearch";
-import CommunitySearch from "./src/assets/CommunitySearch";
 import Setting from "./src/assets/Setting";
 import CommunityDetail from "./src/assets/CommunityDetail";
 import SocialWebView from "./src/assets/social/SocialWebView";
@@ -127,15 +128,8 @@ function HomeStack() {
       />
       <Stack.Screen name="UseEmailSearchId" component={UseEmailSearchId} />
       <Stack.Screen name="ResetPwd" component={ResetPwd} />
-      <Stack.Screen name="Chatting" component={Chatting} />
       <Stack.Screen name="SocialJoin" component={SocialJoin} />
-      <Stack.Screen
-        name="UpdateUserInfo"
-        component={UpdateUserInfo}
-        options={{
-          tabBarStyle: { display: "none" },
-        }}
-      />
+      <Stack.Screen name="Chatting" component={Chatting} />
     </Stack.Navigator>
   );
 }
@@ -144,7 +138,7 @@ function CommunityStack() {
   return (
     <Stack.Navigator
       screenOptions={{ headerShown: false }}
-      initialRouteName="Home"
+      initialRouteName="Community"
     >
       <Stack.Screen name="Community" component={Community} />
       <Stack.Screen
@@ -155,8 +149,8 @@ function CommunityStack() {
         }}
       />
       <Stack.Screen
-        name="CommunitySearch"
-        component={CommunitySearch}
+        name="HomeSearch"
+        component={HomeSearch}
         options={{
           tabBarStyle: { display: "none" },
         }}
@@ -201,14 +195,8 @@ function MypageReadMore() {
       <Stack.Screen name="Mypage" component={Mypage} />
       <Stack.Screen name="ReadMoreSell" component={ReadMoreSell} />
       <Stack.Screen name="ReadMoreBuy" component={ReadMoreBuy} />
+      <Stack.Screen name="Setting" component={Setting} />
       <Stack.Screen name="UpdateUserInfo" component={UpdateUserInfo} />
-      <Stack.Screen
-        name="Setting"
-        component={Setting}
-        options={{
-          tabBarStyle: { display: "none" },
-        }}
-      />
     </Stack.Navigator>
   );
 }
@@ -227,9 +215,9 @@ const getTabBarVisibility = (route) => {
     routeName === "SearchId" ||
     routeName === "SearchPw" ||
     routeName === "HomeSearch" ||
-    routeName === "CommunitySearch" ||
     routeName === "Setting" ||
-    routeName === "CommunityDetail"
+    routeName === "CommunityDetail" ||
+    routeName === "UpdateUserInfo"
   ) {
     return "none";
   }

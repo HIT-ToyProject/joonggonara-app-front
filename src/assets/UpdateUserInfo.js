@@ -32,9 +32,14 @@ const UpdateUserInfo = ({ navigation }) => {
   const [duplicatedNickName, setDuplicatedNickName] = useState(false);
   const [checkPhoneNumber, setCheckPhoneNumber] = useState(false);
   const [checkVerificationCode, setCheckVerificationCode] = useState(false);
+  const [requestVerificationStatus, setRequestVerificationStatus] =
+    useState(false);
 
   const [updateNickName, setUpdateNickName] = useState(false);
   const [updatePhoneNumber, setUpdatePhoneNumber] = useState(false);
+
+  const [minutes, setMinutes] = useState(3);
+  const [seconds, setSeconds] = useState(0);
   useEffect(() => {
     const getUserInfo = async () => {
       const user = await getStorage("userInfo");
@@ -114,8 +119,10 @@ const UpdateUserInfo = ({ navigation }) => {
       });
       if (response && response.data) {
         Alert.alert("알림", "인증 요청되었습니다.");
-        setDuplicatedNickName(true);
+        setMinutes(3);
+        setSeconds(0);
         setUpdatePhoneNumber(phoneNumber);
+        setRequestVerificationStatus(true);
         return;
       } else {
         Alert.alert(
@@ -125,6 +132,50 @@ const UpdateUserInfo = ({ navigation }) => {
       }
     } catch (error) {
       Alert.alert("에러", error.response.data.message);
+    }
+  };
+
+  useEffect(() => {
+    const countDown = setInterval(() => {
+      setSeconds(seconds);
+      if (seconds > 0) {
+        setSeconds(seconds - 1);
+      } else {
+        if (minutes === 0) {
+          clearInterval(countDown);
+          setCheckVerificationCode(false);
+        } else {
+          setMinutes(minutes - 1);
+          setSeconds(59);
+        }
+      }
+    }, 180);
+    return () => clearInterval(countDown);
+  }, [seconds, minutes]);
+
+  const checkverificationCode = async () => {
+    if (!phoneNumber.trim() || !requestVerificationStatus) {
+      Alert.alert("알림", "인증코드를 발송해주세요.");
+      return;
+    } else {
+      const url = "http://localhost:9090/user/signUp/sms/checkCode";
+
+      const verificationRequest = {
+        verificationKey: phoneNumber,
+        verificationCode: verificationCode,
+      };
+
+      try {
+        const response = await axios.post(url, verificationRequest);
+        if (response && response.data && verificationCode === response.data) {
+          Alert.alert("인증 검사", "인증 되었습니다.");
+          setCheckVerificationCode(true);
+        } else {
+          Alert.alert("에러", "인증코드가 일치하지 않습니다.");
+        }
+      } catch (error) {
+        Alert.alert("에러", error.response.data.message);
+      }
     }
   };
 
@@ -183,12 +234,15 @@ const UpdateUserInfo = ({ navigation }) => {
     } else if (userInfo.nickName !== nickName && !duplicatedNickName) {
       Alert.alert("알림", "닉네임 중복 검사해 주세요.");
       return;
-    } else if (userInfo.phoneNumber !== phoneNumber && !checkPhoneNumber) {
+    } else if (
+      userInfo.phoneNumber !== phoneNumber &&
+      !requestVerificationStatus
+    ) {
       Alert.alert("알림", "핸드폰 인증 확인해 주세요.");
       return;
     } else if (
       userInfo.phoneNumber !== phoneNumber &&
-      checkPhoneNumber &&
+      requestVerificationStatus &&
       !checkVerificationCode
     ) {
       Alert.alert("알림", "인증 코드를 확인해 주세요.");
@@ -236,7 +290,7 @@ const UpdateUserInfo = ({ navigation }) => {
         <View style={styles.imageContainer}>
           {profile ? (
             <View style={{ position: "relative" }}>
-              <Image style={styles.uploadImg} source={{ uri: profile }} />
+              <Image style={styles.uploadImg} source={{ uri: profile.uri }} />
             </View>
           ) : (
             <Image style={styles.uploadImg} source={profileSample} />
@@ -347,6 +401,7 @@ const UpdateUserInfo = ({ navigation }) => {
                 borderRadius: 30,
               }}
               onPress={requestVerificationCode}
+              disabled={checkVerificationCode}
             >
               <Text style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>
                 인증 요청
@@ -363,6 +418,7 @@ const UpdateUserInfo = ({ navigation }) => {
                 backgroundColor: "#F7F7F7",
                 paddingLeft: 15,
                 fontSize: 16,
+                paddingRight: checkVerificationCode ? 55 : 0,
               }}
               autoCapitalize="none"
               blurOnSubmit={false}
@@ -370,6 +426,23 @@ const UpdateUserInfo = ({ navigation }) => {
               onChangeText={setVerificationCode}
               inputMode="decimal"
             />
+            {checkVerificationCode && requestVerificationStatus ? (
+              <View
+                style={{
+                  justifyContent: "center",
+                  alignItems: "center",
+                  width: 50,
+                  position: "absolute",
+                  left: 155,
+                }}
+              >
+                <Text style={{ color: "red" }}>
+                  {`${minutes < 10 ? `0${minutes}` : minutes}:${
+                    seconds < 10 ? `0${seconds}` : seconds
+                  }`}
+                </Text>
+              </View>
+            ) : null}
             <TouchableOpacity
               style={{
                 width: 100,
@@ -379,6 +452,7 @@ const UpdateUserInfo = ({ navigation }) => {
                 backgroundColor: "#FEDB37",
                 borderRadius: 30,
               }}
+              onPress={checkverificationCode}
             >
               <Text style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>
                 인증 확인
@@ -440,7 +514,7 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    marginBottom: 30,
+    marginBottom: 50,
     justifyContent: "center",
     alignItems: "center",
   },

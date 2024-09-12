@@ -20,61 +20,69 @@ import { api } from "./Interceptor";
 import { FlatList } from "react-native-gesture-handler";
 import { getSearchStorage, setSearchStorage } from "./SearchStorage";
 
-const SEARCH_HISTORY = "SEARCH_HISTORY";
-const HomeSearch = ({ navigation }) => {
+const HomeSearch = ({ route, navigation }) => {
+  const searchType = route.params.searchType;
+  const goBackPage = route.params.goBackPage;
+
   const [searchInput, setSearchInput] = useState("");
   const { width, height } = useWindowDimensions();
   const [searchHistory, setSearchHistory] = useState([]);
-  const submitKeyword = async () => {
-    const url = "/board/search";
+
+  const submitKeyword = async (item) => {
+    const keyword = item || searchInput;
+    const url =
+      searchType === "productSearch" ? "/board/sarch" : "/community/search";
     const params = {
-      keyword: searchInput,
+      keyword: keyword,
       size: 5,
       page: 0,
     };
+
     try {
       const response = await api.get(url, { params });
-      saveSearchHistory();
-      navigation.navigate({
-        name: "Home",
-        params: {
-          searchData: response.data,
-          keyword: searchInput,
-        },
-        merge: true,
-      });
+
+      if (response && response.data) {
+        console.log(response.data.content);
+        setSearchInput("");
+        saveSearchHistory();
+        navigation.navigate({
+          name: goBackPage, // 이전 화면의 이름
+          params: {
+            searchData: response.data.content, // 전달할 데이터
+            keyword: keyword, // 전달할 검색어
+          },
+        });
+      }
     } catch (error) {
-      console.error(error);
       Alert.alert("에러", error.response.data.message);
     }
   };
 
   const saveSearchHistory = async () => {
-    let history = await getSearchStorage(SEARCH_HISTORY);
+    let history = await getSearchStorage(searchType);
     if (searchInput.trim() === "") return;
     if (!history.includes(searchInput)) {
       history.push(searchInput);
-      setSearchStorage(SEARCH_HISTORY, history);
+      setSearchStorage(searchType, history);
     }
   };
 
   useEffect(() => {
     const getSearchHistorys = async () => {
-      const history = await getSearchStorage(SEARCH_HISTORY);
+      const history = await getSearchStorage(searchType);
       setSearchHistory(history);
     };
     getSearchHistorys();
   }, []);
 
   const removeSearchHistory = async (item) => {
-    let history = await getSearchStorage(SEARCH_HISTORY);
+    let history = await getSearchStorage(searchType);
     history = history.filter((data) => data !== item);
-    setSearchStorage(SEARCH_HISTORY, history);
+    setSearchStorage(searchType, history);
     setSearchHistory(history);
   };
   const submitHistory = async (item) => {
-    setSearchInput(item);
-    submitKeyword();
+    submitKeyword(item);
   };
   const renderItem = ({ item }) => (
     <View
@@ -124,13 +132,13 @@ const HomeSearch = ({ navigation }) => {
             <Icon_AntDesign name="left" size={30} />
           </TouchableOpacity>
           <TextInput
-            editable
             style={styles.input}
+            value={searchInput}
             onChangeText={setSearchInput}
             placeholder="검색"
             placeholderTextColor={"#ccc"}
             autoCapitalize="none"
-            onSubmitEditing={submitKeyword}
+            onSubmitEditing={() => submitKeyword()}
           />
         </View>
       </View>
@@ -143,9 +151,7 @@ const HomeSearch = ({ navigation }) => {
           }}
         >
           <Text style={{ fontSize: 16, fontWeight: 600 }}>최근 검색</Text>
-          <TouchableOpacity>
-            <Text style={{ fontSize: 16, color: "#222" }}>검색 삭제</Text>
-          </TouchableOpacity>
+          <Text style={{ fontSize: 16, color: "#222" }}>검색 삭제</Text>
         </View>
 
         <View

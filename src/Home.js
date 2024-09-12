@@ -125,7 +125,10 @@ const Home = ({ route, navigation }) => {
   };
 
   const ChangeBtnSearch = () => {
-    navigation.navigate("HomeSearch", { screen: "HomeSearchScreenName" });
+    navigation.navigate("HomeSearch", {
+      searchType: "homeSearch",
+      goBackPage: "Home",
+    });
   };
 
   const moveWritePage = async () => {

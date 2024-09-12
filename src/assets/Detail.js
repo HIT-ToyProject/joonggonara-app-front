@@ -78,6 +78,7 @@ const Detail = ({ route, navigation }) => {
           chatRoomStatus: "BUYER",
           product: response.data.productResponse,
           profile: response.data.productResponse.memberResponse.profile,
+          withdrawalStatus: false,
         });
       }
     } catch (error) {

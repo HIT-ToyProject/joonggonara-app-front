@@ -38,6 +38,7 @@ const Chatting = ({ route, navigation }) => {
   const flatListRef = useRef(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [doneDeal, setDoneDeal] = useState("");
+
   const TextEncodingPolyfill = require("text-encoding");
   Object.assign("global", {
     TextEncoder: TextEncodingPolyfill.TextEncoder,
@@ -70,7 +71,7 @@ const Chatting = ({ route, navigation }) => {
     return false;
   };
 
-  const sendChatMessage = async (message = null) => {
+  const sendChatMessage = async () => {
     if (chatClient.current && chatInput.trim()) {
       const chatRequest = {
         message: chatInput,
@@ -297,15 +298,34 @@ const Chatting = ({ route, navigation }) => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon_AntDesign name="left" size={30} />
           </TouchableOpacity>
-          <Text
+          <View
             style={{
-              fontSize: 25,
-              fontWeight: 700,
-              color: "#000",
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
             }}
           >
-            {data.roomName}
-          </Text>
+            <Text
+              style={{
+                fontSize: 25,
+                fontWeight: 700,
+                color: "#000",
+              }}
+            >
+              {data.roomName}
+            </Text>
+            {data.withdrawalStatus && (
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: "#333",
+                }}
+              >
+                (회원탈퇴)
+              </Text>
+            )}
+          </View>
 
           <TouchableOpacity
             onPress={() =>

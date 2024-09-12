@@ -40,6 +40,7 @@ const Mypage = ({ navigation }) => {
           const url = "/product/" + item.nickName;
           try {
             const response = await api.get(url);
+
             if (response && response.data) {
               setProducts(response.data);
               setSoldOutProducts(

@@ -45,8 +45,7 @@ const SocialJoin = ({ route, navigation }) => {
 
   const [checkVerificationCodeStatus, setCheckVerificationCodeStatus] =
     useState(false);
-  const [verificaationCodeDisable, setVerificationCodeDisable] =
-    useState(false);
+  const [verificaationCodeDisable, setVerificationCodeDisable] = useState(true);
   const [sendVerificationCodeStatus, setSendVerificationCodeStatus] =
     useState(false);
 
@@ -125,12 +124,13 @@ const SocialJoin = ({ route, navigation }) => {
       } else {
         if (minutes === 0) {
           clearInterval(countDown);
+          setVerificationCodeDisable(true);
         } else {
           setMinutes(minutes - 1);
           setSeconds(59);
         }
       }
-    }, 180);
+    }, 1800);
     return () => clearInterval(countDown);
   }, [seconds, minutes]);
 
@@ -148,10 +148,11 @@ const SocialJoin = ({ route, navigation }) => {
 
       try {
         const response = await axios.post(url, verificationRequest);
-        if (verificationCode === response.data) {
+        if (response && response.data) {
           Alert.alert("인증 검사", "인증 되었습니다.");
           setCheckVerificationCodeStatus(true);
           setVerificationCodeDisable(true);
+          setSendVerificationCodeStatus(false);
         } else {
           Alert.alert("에러", "인증코드가 일치하지 않습니다.");
         }
@@ -176,17 +177,15 @@ const SocialJoin = ({ route, navigation }) => {
       setName("");
       setErrorText(true);
       nameRef.current.focus();
-    }
-    // else if (!phoneNumber) {
-    //   setPhoneNumber("");
-    //   setErrorText(true);
-    //   phoneRef.current.focus();
-    // } else if (!verificationCode || !checkVerificationCodeStatus) {
-    //   setVerificationCode("");
-    //   setErrorText(true);
-    //   checkNumberRef.current.focus();
-    // }
-    else {
+    } else if (!phoneNumber) {
+      setPhoneNumber("");
+      setErrorText(true);
+      phoneRef.current.focus();
+    } else if (!verificationCode || !checkVerificationCodeStatus) {
+      setVerificationCode("");
+      setErrorText(true);
+      checkNumberRef.current.focus();
+    } else {
       Alert.alert("회원가입", "회원가입 하시겠습니까?", [
         { text: "취소", style: "destructive" },
         {
@@ -356,6 +355,7 @@ const SocialJoin = ({ route, navigation }) => {
                       returnKeyType="next"
                       inputMode="tel"
                       placeholder="01012345678"
+                      editable={verificaationCodeDisable}
                     />
                     <TouchableOpacity
                       style={styles.overlap}
@@ -364,7 +364,7 @@ const SocialJoin = ({ route, navigation }) => {
                       <Text
                         style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}
                       >
-                        {sendVerificationCodeStatus ? "재전송" : "인증 발송"}
+                        인증 요청
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -384,6 +384,7 @@ const SocialJoin = ({ route, navigation }) => {
                           !verificationCode.trim() && {
                             borderBottomColor: "red",
                           },
+                        { paddingRight: sendVerificationCode ? 55 : 0 },
                       ]}
                       value={verificationCode}
                       onChangeText={setVerificationCode}
@@ -398,14 +399,13 @@ const SocialJoin = ({ route, navigation }) => {
                       editable={verificaationCodeDisable}
                     />
 
-                    {sendVerificationCodeStatus && phone.trim() ? (
+                    {sendVerificationCodeStatus && phoneNumber.trim() ? (
                       <View
                         style={{
-                          flex: 1,
-                          borderWidth: 1,
-                          borderColor: "red",
-                          justifyContent: "center",
-                          alignItems: "center",
+                          position: "absolute",
+                          top: "55%",
+                          left: "55%",
+                          transform: [{ translateY: -10 }],
                         }}
                       >
                         <Text style={{ color: "red" }}>
@@ -418,7 +418,7 @@ const SocialJoin = ({ route, navigation }) => {
 
                     <TouchableOpacity
                       style={styles.overlap}
-                      onPress={checkverificationCode}
+                      onPress={() => checkverificationCode()}
                     >
                       <Text
                         style={{
@@ -427,7 +427,7 @@ const SocialJoin = ({ route, navigation }) => {
                           color: "#fff",
                         }}
                       >
-                        중복 확인
+                        인증 확인
                       </Text>
                     </TouchableOpacity>
                   </View>

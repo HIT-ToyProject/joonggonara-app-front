@@ -30,7 +30,6 @@ const Join = ({ route, navigation }) => {
   const [checkPassword, setCheckPassword] = useState("");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
 
@@ -58,8 +57,7 @@ const Join = ({ route, navigation }) => {
     useState(false);
   const [checkVerificationCodeStatus, setCheckVerificationCodeStatus] =
     useState(false);
-  const [verificaationCodeDisable, setVerificationCodeDisable] =
-    useState(false);
+  const [verificaationCodeDisable, setVerificationCodeDisable] = useState(true);
 
   const eyeToggle = () => {
     setEye(!eye);
@@ -191,11 +189,11 @@ const Join = ({ route, navigation }) => {
   };
 
   const sendVerificationCode = async () => {
-    if (!phone.trim()) return;
+    if (!phoneNumber.trim()) return;
     else {
       const url = "http://localhost:9090/user/signUp/sms/verification";
       try {
-        const response = await axios.post(url, { phoneNumber: phone });
+        const response = await axios.post(url, { phoneNumber: phoneNumber });
         if (response.data) {
           Alert.alert("인증 코드", "인증 코드가 전송되었습니다.");
           setMinutes(3);
@@ -216,17 +214,18 @@ const Join = ({ route, navigation }) => {
       } else {
         if (minutes === 0) {
           clearInterval(countDown);
+          setSendVerificationCodeStatus(false);
         } else {
           setMinutes(minutes - 1);
           setSeconds(59);
         }
       }
-    }, 180);
+    }, 1800);
     return () => clearInterval(countDown);
   }, [seconds, minutes]);
 
   const checkverificationCode = async () => {
-    if (!phone.trim() && !sendVerificationCodeStatus) {
+    if (!phoneNumber.trim() || !sendVerificationCodeStatus) {
       alert("인증코드를 발송해주세요.");
       return;
     } else {
@@ -239,12 +238,12 @@ const Join = ({ route, navigation }) => {
 
       try {
         const response = await axios.post(url, verificationRequest);
-        if (verificationCode === response.data) {
+        if (response && response.data) {
           Alert.alert("인증 검사", "인증 되었습니다.");
           setCheckVerificationCodeStatus(true);
-          setVerificationCodeDisable(true);
+          setVerificationCodeDisable(false);
         } else {
-          Alert.alert("에러", "인증코드가 일치하지 않습니다.");
+          Alert.alert("알림", "인증코드가 일치하지 않습니다.");
         }
       } catch (error) {
         Alert.alert("에러", error.response.data.message);
@@ -291,17 +290,15 @@ const Join = ({ route, navigation }) => {
       setName("");
       setErrorText(true);
       nameRef.current.focus();
-    }
-    // else if (!phone) {
-    //   setPhone("");
-    //   setErrorText(true);
-    //   phoneRef.current.focus();
-    // } else if (!verificationCode || !checkVerificationCodeStatus) {
-    //   setVerificationCode("");
-    //   setErrorText(true);
-    //   checkNumberRef.current.focus();
-    // }
-    else {
+    } else if (!phoneNumber) {
+      setPhoneNumber("");
+      setErrorText(true);
+      phoneRef.current.focus();
+    } else if (!verificationCode || !checkVerificationCodeStatus) {
+      setVerificationCode("");
+      setErrorText(true);
+      checkNumberRef.current.focus();
+    } else {
       Alert.alert("회원가입", "회원가입 하시겠습니까?", [
         { text: "취소", style: "destructive" },
         {
@@ -323,7 +320,7 @@ const Join = ({ route, navigation }) => {
         password: password,
         name: name,
         nickName: nickName,
-        phoneNumber: phone,
+        phoneNumber: phoneNumber,
         loginType: "GENERAL",
         isNotification: "true",
       };
@@ -564,10 +561,10 @@ const Join = ({ route, navigation }) => {
                       style={[
                         styles.joinInputOverlab,
                         errorText &&
-                          !phone.trim() && { borderBottomColor: "red" },
+                          !phoneNumber.trim() && { borderBottomColor: "red" },
                       ]}
-                      value={phone}
-                      onChangeText={setPhone}
+                      value={phoneNumber}
+                      onChangeText={setPhoneNumber}
                       ref={phoneRef}
                       onSubmitEditing={() => sendVerificationCode}
                       autoCapitalize="none"
@@ -575,6 +572,7 @@ const Join = ({ route, navigation }) => {
                       returnKeyType="next"
                       inputMode="tel"
                       placeholder="01012345678"
+                      editable={verificaationCodeDisable}
                     />
                     <TouchableOpacity
                       style={styles.overlap}
@@ -583,7 +581,7 @@ const Join = ({ route, navigation }) => {
                       <Text
                         style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}
                       >
-                        {sendVerificationCodeStatus ? "재전송" : "인증 발송"}
+                        인증 요청
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -603,6 +601,7 @@ const Join = ({ route, navigation }) => {
                           !verificationCode.trim() && {
                             borderBottomColor: "red",
                           },
+                        { paddingRight: sendVerificationCode ? 55 : 0 },
                       ]}
                       value={verificationCode}
                       onChangeText={setVerificationCode}
@@ -617,14 +616,13 @@ const Join = ({ route, navigation }) => {
                       editable={verificaationCodeDisable}
                     />
 
-                    {sendVerificationCodeStatus && phone.trim() ? (
+                    {sendVerificationCodeStatus && phoneNumber.trim() ? (
                       <View
                         style={{
-                          flex: 1,
-                          borderWidth: 1,
-                          borderColor: "red",
-                          justifyContent: "center",
-                          alignItems: "center",
+                          position: "absolute",
+                          top: "55%",
+                          left: "55%",
+                          transform: [{ translateY: -10 }],
                         }}
                       >
                         <Text style={{ color: "red" }}>
@@ -637,7 +635,7 @@ const Join = ({ route, navigation }) => {
 
                     <TouchableOpacity
                       style={styles.overlap}
-                      onPress={checkverificationCode}
+                      onPress={() => checkverificationCode()}
                     >
                       <Text
                         style={{
@@ -646,7 +644,7 @@ const Join = ({ route, navigation }) => {
                           color: "#fff",
                         }}
                       >
-                        중복 확인
+                        인증 확인
                       </Text>
                     </TouchableOpacity>
                   </View>

@@ -76,6 +76,7 @@ const UseEmailSearchId = () => {
       } else {
         if (minutes === 0) {
           clearInterval(countDown);
+          setSendVerificationCodeStatus(false);
         } else {
           setMinutes(minutes - 1);
           setSeconds(59);
@@ -99,19 +100,23 @@ const UseEmailSearchId = () => {
 
     try {
       const response = await axios.post(url, verificationRequest);
-      Alert.alert(
-        "회원 ID",
-        `${nameInput}님의 아이디는 ${response.data.userId} 입니다.`,
-        [
-          {
-            text: "확인",
-          },
-          {
-            text: "로그인",
-            onPress: () => navigation.navigate("Login"),
-          },
-        ]
-      );
+      if (response && response.data) {
+        Alert.alert(
+          "회원 ID",
+          `${nameInput}님의 아이디는 ${response.data.userId} 입니다.`,
+          [
+            {
+              text: "확인",
+            },
+            {
+              text: "로그인",
+              onPress: () => navigation.navigate("Login"),
+            },
+          ]
+        );
+      } else {
+        Alert.alert("알림", "인증코드가 일치하지 않습니다.");
+      }
     } catch (error) {
       Alert.alert("에러", error.response.data.message);
     }
@@ -198,7 +203,7 @@ const UseEmailSearchId = () => {
 
       <View
         style={{
-          gap: 15,
+          gap: 10,
           flexDirection: "row",
           justifyContent: "space-between",
           alignItems: "center",
@@ -211,6 +216,8 @@ const UseEmailSearchId = () => {
             flexDirection: "row",
             gap: 10,
             width: "80%",
+            alignContent: "center",
+            justifyContent: "center",
           }}
         >
           <TextInput
@@ -222,6 +229,7 @@ const UseEmailSearchId = () => {
                   borderBottomColor: "red",
                   borderBottomWidth: 1,
                 },
+              { paddingRight: !sendVerificationCodeStatus ? 55 : 0 },
             ]}
             onChangeText={setVerificationCode}
             autoCapitalize="none"
@@ -234,9 +242,10 @@ const UseEmailSearchId = () => {
           seconds > 0 ? (
             <View
               style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
+                position: "absolute",
+                top: "50%",
+                left: "40%",
+                transform: [{ translateY: -8 }],
               }}
             >
               <Text style={{ color: "red" }}>
@@ -262,11 +271,11 @@ const UseEmailSearchId = () => {
 
 const styles = StyleSheet.create({
   joinInputOverlab: {
-    flex: 3,
     height: 50,
     borderRadius: 30,
     backgroundColor: "#F7F7F7",
     paddingLeft: 20,
+    width: 150,
   },
   joinInput: {
     direction: "row",

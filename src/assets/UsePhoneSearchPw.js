@@ -5,88 +5,251 @@
  *
  * @format
  */
-import React, {useState} from 'react';
+import { useNavigation } from "@react-navigation/native";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
   TouchableOpacity,
   StyleSheet,
   TextInput,
-} from 'react-native';
+  Alert,
+} from "react-native";
 
-const UsePhoneSearchPw = ({navigation}) => {
-  const [idInput, setIdInput] = useState('');
+const UsePhoneSearchPw = () => {
+  const [idInput, setIdInput] = useState("");
+  const [nameInput, setNameInput] = useState("");
+  const [phoneNumberInput, setPhoneNumberInput] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [sendVerificationCodeStatus, setSendVerificationCodeStatus] =
+    useState(false);
+
+  const [errorStatus, setErrorStatus] = useState(false);
+
+  const [minutes, setMinutes] = useState(3);
+  const [seconds, setSeconds] = useState(0);
+
+  const navigation = useNavigation();
+
+  const requestVerificationCode = async () => {
+    if (!idInput || !phoneNumberInput || !nameInput) {
+      setErrorStatus(true);
+      return;
+    }
+
+    const url = "http://localhost:9090/user/login/findPassword/sms";
+    const findPasswordByEmailRequest = {
+      name: nameInput,
+      userId: idInput,
+      phoneNumber: phoneNumberInput,
+    };
+    try {
+      const response = await axios.post(url, findPasswordByEmailRequest);
+
+      if (response && response.data) {
+        Alert.alert("인증 코드", "인증 코드가 전송되었습니다.");
+        setMinutes(3);
+        setSeconds(0);
+        setSendVerificationCodeStatus(true);
+      }
+    } catch (error) {
+      console.log(error);
+      Alert.alert("에러", error.response.data.message);
+    }
+  };
+
+  useEffect(() => {
+    const countDown = setInterval(() => {
+      setSeconds(seconds);
+      if (seconds > 0) {
+        setSeconds(seconds - 1);
+      } else {
+        if (minutes === 0) {
+          clearInterval(countDown);
+          setSendVerificationCodeStatus(false);
+        } else {
+          setMinutes(minutes - 1);
+          setSeconds(59);
+        }
+      }
+    }, 1800);
+    return () => clearInterval(countDown);
+  }, [seconds, minutes]);
+
+  const checkVerificationCode = async () => {
+    if (sendVerificationCodeStatus && !verificationCode) {
+      setErrorStatus(true);
+      return;
+    }
+    const url =
+      "http://localhost:9090/user/login/checkVerificationCode/password?verificationType=SMS";
+    const verificationRequest = {
+      verificationKey: phoneNumberInput,
+      verificationCode: verificationCode,
+    };
+
+    try {
+      const response = await axios.post(url, verificationRequest);
+      if (response && response.data) {
+        navigation.navigate("ResetPwd", { userId: idInput });
+      }
+    } catch (error) {
+      Alert.alert("에러", error.response.data.message);
+    }
+  };
 
   return (
     <View>
       <View
         style={{
           gap: 15,
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
           paddingTop: 20,
-        }}>
-        <Text style={{fontSize: 16, color: '#000'}}>아이디</Text>
+        }}
+      >
+        <Text style={{ fontSize: 16, color: "#000" }}>아이디</Text>
         <TextInput
-          style={styles.joinInput}
+          style={[
+            styles.joinInput,
+            errorStatus &&
+              !idInput && {
+                borderBottomColor: "red",
+                borderBottomWidth: 1,
+              },
+          ]}
           value={idInput}
-          onChange={setIdInput}
+          onChangeText={setIdInput}
+          autoCapitalize="none"
+          blurOnSubmit={false}
+          returnKeyType="next"
         />
       </View>
       <View
         style={{
           gap: 15,
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
           paddingTop: 20,
-        }}>
-        <Text style={{fontSize: 16, color: '#000'}}>이름</Text>
+        }}
+      >
+        <Text style={{ fontSize: 16, color: "#000" }}>이름</Text>
         <TextInput
-          style={styles.joinInput}
-          value={idInput}
-          onChange={setIdInput}
+          style={[
+            styles.joinInput,
+            errorStatus &&
+              !nameInput && { borderBottomColor: "red", borderBottomWidth: 1 },
+          ]}
+          autoCapitalize="none"
+          blurOnSubmit={false}
+          returnKeyType="next"
+          onChangeText={setNameInput}
         />
       </View>
       <View
         style={{
-          gap: 15,
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          gap: 10,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
           paddingTop: 20,
-        }}>
-        <Text style={{fontSize: 16, color: '#000'}}>휴대전화</Text>
-        <TextInput
-          style={styles.joinInput}
-          value={idInput}
-          onChange={setIdInput}
-        />
-      </View>
-      <View
-        style={{
-          gap: 15,
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          paddingTop: 20,
-        }}>
-        <Text style={{fontSize: 16, color: '#000'}}>인증번호</Text>
+        }}
+      >
+        <Text style={{ fontSize: 16, color: "#000" }}>휴대전화</Text>
         <View
           style={{
-            flexDirection: 'row',
+            flexDirection: "row",
             gap: 10,
-            width: '80%',
-          }}>
+            width: "80%",
+          }}
+        >
           <TextInput
-            style={styles.joinInputOverlab}
-            value={idInput}
-            onChange={setIdInput}
+            style={[
+              styles.joinInputOverlab,
+              errorStatus &&
+                !phoneNumberInput && {
+                  borderBottomColor: "red",
+                  borderBottomWidth: 1,
+                },
+            ]}
+            onChangeText={setPhoneNumberInput}
+            inputMode="tel"
+            blurOnSubmit={false}
+            returnKeyType="next"
           />
-          <TouchableOpacity style={styles.overlap}>
-            <Text style={{fontSize: 16, fontWeight: 700, color: '#fff'}}>
+          <TouchableOpacity
+            style={styles.overlap}
+            onPress={requestVerificationCode}
+          >
+            <Text style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>
               인증 요청
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View
+        style={{
+          gap: 10,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingTop: 20,
+        }}
+      >
+        <Text style={{ fontSize: 16, color: "#000" }}>인증번호</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 10,
+            width: "80%",
+            alignContent: "center",
+            justifyContent: "center",
+          }}
+        >
+          <TextInput
+            style={[
+              styles.joinInputOverlab,
+              errorStatus &&
+                sendVerificationCodeStatus &&
+                !verificationCode && {
+                  borderBottomColor: "red",
+                  borderBottomWidth: 1,
+                },
+              { paddingRight: !sendVerificationCodeStatus ? 55 : 0 },
+            ]}
+            onChangeText={setVerificationCode}
+            autoCapitalize="none"
+            blurOnSubmit={false}
+            returnKeyType="next"
+          />
+          {sendVerificationCodeStatus &&
+          phoneNumberInput &&
+          minutes > 0 &&
+          seconds > 0 ? (
+            <View
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "40%",
+                transform: [{ translateY: -8 }],
+              }}
+            >
+              <Text style={{ color: "red" }}>
+                {`${minutes < 10 ? `0${minutes}` : minutes}:${
+                  seconds < 10 ? `0${seconds}` : seconds
+                }`}
+              </Text>
+            </View>
+          ) : null}
+          <TouchableOpacity
+            style={styles.overlap}
+            onPress={checkVerificationCode}
+          >
+            <Text style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>
+              인증 확인
             </Text>
           </TouchableOpacity>
         </View>
@@ -97,26 +260,27 @@ const UsePhoneSearchPw = ({navigation}) => {
 
 const styles = StyleSheet.create({
   joinInputOverlab: {
-    flex: 3,
     height: 50,
     borderRadius: 30,
-    backgroundColor: '#F7F7F7',
+    backgroundColor: "#F7F7F7",
     paddingLeft: 20,
+    width: 150,
   },
   joinInput: {
-    width: '80%',
+    direction: "row",
+    width: "80%",
     height: 50,
     borderRadius: 30,
-    backgroundColor: '#F7F7F7',
+    backgroundColor: "#F7F7F7",
     paddingLeft: 20,
   },
   overlap: {
     flex: 2,
     height: 50,
     borderRadius: 30,
-    backgroundColor: '#FEDB37',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#FEDB37",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

@@ -2,11 +2,17 @@
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTRootView.h>
 #import "RNSplashScreen.h"  // 여기에 추가
+#import <Firebase.h>
+
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+
+  if ([FIRApp defaultApp] == nil) { // 추가 (line:35)
+  [FIRApp configure];
+}
   RCTBridge *bridge = [[RCTBridge alloc] initWithDelegate:self launchOptions:launchOptions];
   RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge
                                                    moduleName:@"front_app"

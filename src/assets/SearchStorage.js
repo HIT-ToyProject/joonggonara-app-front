@@ -8,3 +8,6 @@ export const getSearchStorage = async (key) => {
   const result = await AsyncStorage.getItem(key);
   return result ? JSON.parse(result) : [];
 };
+export const removeSearchStorage = async (key) => {
+  await AsyncStorage.removeItem(key);
+};

@@ -80,6 +80,7 @@ const UseEmailSearchPw = () => {
       } else {
         if (minutes === 0) {
           clearInterval(countDown);
+          setSendVerificationCodeStatus(false);
         } else {
           setMinutes(minutes - 1);
           setSeconds(59);
@@ -127,7 +128,7 @@ const UseEmailSearchPw = () => {
           style={[
             styles.joinInput,
             errorStatus &&
-              !emailInput && {
+              !idInput && {
                 borderBottomColor: "red",
                 borderBottomWidth: 1,
               },
@@ -193,6 +194,7 @@ const UseEmailSearchPw = () => {
             blurOnSubmit={false}
             returnKeyType="next"
           />
+
           <TouchableOpacity
             style={styles.overlap}
             onPress={requestVerificationCode}
@@ -217,7 +219,7 @@ const UseEmailSearchPw = () => {
       </View>
       <View
         style={{
-          gap: 15,
+          gap: 10,
           flexDirection: "row",
           justifyContent: "space-between",
           alignItems: "center",
@@ -241,6 +243,7 @@ const UseEmailSearchPw = () => {
                   borderBottomColor: "red",
                   borderBottomWidth: 1,
                 },
+              { paddingRight: !sendVerificationCodeStatus ? 55 : 0 },
             ]}
             onChangeText={setVerificationCode}
             autoCapitalize="none"
@@ -253,9 +256,10 @@ const UseEmailSearchPw = () => {
           seconds > 0 ? (
             <View
               style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
+                position: "absolute",
+                top: "50%",
+                left: "40%",
+                transform: [{ translateY: -8 }],
               }}
             >
               <Text style={{ color: "red" }}>
@@ -281,11 +285,11 @@ const UseEmailSearchPw = () => {
 
 const styles = StyleSheet.create({
   joinInputOverlab: {
-    flex: 3,
     height: 50,
     borderRadius: 30,
     backgroundColor: "#F7F7F7",
     paddingLeft: 20,
+    width: 150,
   },
   joinInput: {
     width: "80%",

@@ -16,13 +16,13 @@ end
 
 target 'front_app' do
   config = use_native_modules!
-
+  pod 'GoogleUtilities', :modular_headers => true
+  use_modular_headers!
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
-
   target 'front_appTests' do
     inherit! :complete
     # Pods for testing

@@ -67,7 +67,7 @@ const Chat = ({ navigation }) => {
   };
 
   const disconnect = () => {
-    client.current.deactivate();
+    if (client.current) client.current.deactivate();
   };
 
   const getProduct = async (roomId) => {
@@ -95,9 +95,10 @@ const Chat = ({ navigation }) => {
         senderNickName: userInfo.nickName,
         chatRoomStatus: chatRoom.chatRoomStatus,
         product: product,
-        profile: userInfo.profile,
+        profile: chatRoom.profile,
+        withdrawalStatus: chatRoom.withdrawalStatus,
       },
-      { screen: "ChattingScreenName" }
+      { screen: "Chatting" }
     );
   };
 
@@ -108,10 +109,15 @@ const Chat = ({ navigation }) => {
       const response = await api.get(url, {
         params: { nickName: member.nickName },
       });
-      setChatRooms(response.data);
-      setRefreshing(false);
-      setUserInfo(member);
-      connectHandler(response.data);
+      if (response && response.data) {
+        room = response.data.filter((room) => room != null);
+        setChatRooms(room);
+        setRefreshing(false);
+        setUserInfo(member);
+        connectHandler(room);
+      } else {
+        setChatRooms([]);
+      }
     } catch (error) {
       Alert.alert("에러", error.response.data.message);
     }
@@ -206,77 +212,86 @@ const Chat = ({ navigation }) => {
       </View>
     );
   };
-  const renderItem = ({ item }) => (
-    <View
-      style={{
-        justifyContent: "center",
-        alignItems: "center",
-        marginTop: 20,
-      }}
-    >
-      <TouchableOpacity
-        onPress={() => headerChangeBtnToggle(item)}
-        activeOpacity={1}
+  const renderItem = ({ item }) => {
+    return (
+      <View
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+          marginTop: 20,
+        }}
       >
-        <View style={styles.content_item}>
+        <TouchableOpacity
+          onPress={() => headerChangeBtnToggle(item)}
+          activeOpacity={1}
+        >
           <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: 20,
-            }}
+            style={[
+              styles.content_item,
+              item.withdrawalStatus && { backgroundColor: "#d3d3d3" },
+            ]}
           >
-            <View>
-              <Image
-                source={
-                  userInfo.profile ? { uri: userInfo.profile } : sampleUserImg
-                }
-                style={styles.sampleOtherUser}
-              />
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 20,
+              }}
+            >
+              <View>
+                <Image
+                  source={item.profile ? { uri: item.profile } : sampleUserImg}
+                  style={styles.sampleOtherUser}
+                />
+              </View>
+              <View style={{ gap: 7 }}>
+                <View style={{ flexDirection: "row" }}>
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 400,
+                      color: "#000",
+                    }}
+                  >
+                    {item.roomName}
+                  </Text>
+                  {item.withdrawalStatus && <Text>(회원탈퇴)</Text>}
+                </View>
+
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 400,
+                    color: "rgba(158, 161, 169, 1)",
+                  }}
+                >
+                  {item.message}
+                </Text>
+              </View>
             </View>
-            <View style={{ gap: 7 }}>
+            <View
+              style={{
+                alignItems: "flex-end",
+                gap: 10,
+              }}
+            >
+              <Icon_MaterialCommunityIcons name="circle" color={"#FEDB37"} />
               <Text
                 style={{
-                  fontSize: 18,
-                  fontWeight: 400,
-                  color: "#000",
-                }}
-              >
-                {item.roomName}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: 400,
                   color: "rgba(158, 161, 169, 1)",
                 }}
               >
-                {item.message}
+                {formatDate(item.lastChatTime)}
               </Text>
             </View>
           </View>
-          <View
-            style={{
-              alignItems: "flex-end",
-              gap: 10,
-            }}
-          >
-            <Icon_MaterialCommunityIcons name="circle" color={"#FEDB37"} />
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: 400,
-                color: "rgba(158, 161, 169, 1)",
-              }}
-            >
-              {formatDate(item.lastChatTime)}
-            </Text>
-          </View>
-        </View>
-      </TouchableOpacity>
-    </View>
-  );
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#FEDB37" }}>
